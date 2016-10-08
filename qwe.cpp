@@ -1,6 +1,7 @@
 #include <bits/stdc++.h>
 
-#include "Flow.h"
+// #include "FFTinIntegers.h"
+// #include "FFT.h"
 
 #define itn int
 #define LL long long
@@ -20,7 +21,7 @@ inline int nxt(){
 
 int main(){
 
-	
+	run_fft();
 
 	return 0;
 }

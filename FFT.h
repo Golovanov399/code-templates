@@ -55,7 +55,6 @@ int rev(int n, int cnt){
 
 void fft(vector<base>& a, const vector<base>& angles, bool inv = false){
 	int n = a.size();
-	int cnt = __builtin_ctz(n);
 
 	for (int i = 1, j = 0; i < n; i++){
 		int bit = n >> 1;
@@ -111,13 +110,13 @@ void fft(vector<base>& a, const vector<base>& angles, bool inv = false){
 
 vector<int> fft_mult(const vector<int>& a, const vector<int>& b){
 	int n = 1;
-	while (n < a.size() || n < b.size())
+	while (n < (int)a.size() || n < (int)b.size())
 		n *= 2;
 	n *= 2;
 	vector<base> ar(n), br(n);
-	for (int i = 0; i < a.size(); i++)
+	for (int i = 0; i < (int)a.size(); i++)
 		ar[i] = a[i];
-	for (int i = 0; i < b.size(); i++)
+	for (int i = 0; i < (int)b.size(); i++)
 		br[i] = b[i];
 	vector<base> angles(n);
 	for (int i = 0; i < n; i++){
@@ -151,7 +150,7 @@ void test_fft(int n){
 		vector<int> res;
 		for (int i = 0; i < n; i++){
 			for (int j = 0; j < n; j++){
-				if (i + j >= res.size())
+				if (i + j >= (int)res.size())
 					res.push_back(0);
 				res[i + j] += a[i] * b[j];
 			}
@@ -161,7 +160,8 @@ void test_fft(int n){
 			return;
 		}
 	}
-	cerr << setprecision(6) << fixed;
+	cerr.precision(6);
+	cerr << fixed;
 	cerr << 1.0 * (finish - start) / CLOCKS_PER_SEC << " secs.\n";
 }
 

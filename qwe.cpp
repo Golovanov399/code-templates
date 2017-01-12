@@ -1,7 +1,9 @@
 #include <bits/stdc++.h>
 
-// #include "FFTinIntegers.h"
-// #include "FFT.h"
+using namespace std;
+
+// #define INT_GEOM
+#include "Geometry.h"
 
 #define itn int
 #define LL long long
@@ -11,8 +13,6 @@
 #define y second
 #define all(x) (x).begin(), (x).end()
 
-using namespace std;
-
 inline int nxt(){
 	int x;
 	scanf("%d", &x);
@@ -21,7 +21,15 @@ inline int nxt(){
 
 int main(){
 
-	run_fft();
+	vector<Point> pts = {{4, 0}, {4, 4}, {2, 2}, {0, 4}, {0, 0}};
+	Point pt(2, 3);
+	Polygon poly(pts);
+	// cerr << typeid(poly).name() << "\n";
+	// cout << poly.contains(pt) << "\n";
+	// poly = ConvexPolygon(getConvexHull(pts));
+	// cerr << typeid(poly).name() << "\n";
+	// cout << poly.contains(pt) << "\n";
+	// cout << getConvexHull(pts).contains(pt) << "\n";
 
 	return 0;
 }

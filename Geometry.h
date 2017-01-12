@@ -1,225 +1,351 @@
-const long double PI = acosl(-1);
-const long double eps = 1e-9;
+#ifdef SUPER_PRECISE
+	using ld = long double;
+	#define sqrt sqrtl
+	#define fabs fabsl
+	#define cos cosl
+	#define sin sinl
+	#define acos acosl
+	#define asin asinl
+#else
+	using ld = double;
+#endif
 
-inline bool eq(long double x, long double y = 0){
-	return fabsl(x - y) < eps;
+const ld eps = 1e-9;
+const ld PI = acosl(-1);
+
+#ifdef INT_GEOM
+	using ptype = long long;
+	#define ptype_zero(x) ((x) == 0)
+	#define abs llabs
+#else
+	using ptype = ld;
+	#define ptype_zero(x) (fabs((x)) < eps)
+	#define abs fabs
+#endif
+
+int sign(ptype x) {
+	if (ptype_zero(x)) {
+		return 0;
+	} else if (x > 0) {
+		return 1;
+	} else {
+		return -1;
+	}
 }
 
-struct pt{
-	long double x, y;
+class Point {
+public:
+	Point() {}
+	Point(ptype _x, ptype _y): x(_x), y(_y) {}
 
-	pt(){x = y = 0;}
-	pt(long double x, long double y):x(x),y(y){}
-	pt (const pt& p){
-		x = p.x;
-		y = p.y;
+	ptype getX() const {
+		return x;
 	}
 
-	void rot(const long double& ang){
-		long double nx = x * cosl(ang) - y * sinl(ang);
-		long double ny = x * sinl(ang) + y * cosl(ang);
-		x = nx, y = ny;
+	ptype getY() const {
+		return y;
 	}
 
-	pt operator +(const pt& p) const {
-		return pt(x + p.x, y + p.y);
+	Point operator +(const Point& ot) const {
+		return Point(x + ot.x, y + ot.y);
 	}
 
-	void operator +=(const pt& p){
-		x += p.x;
-		y += p.y;
+	Point operator -(const Point& ot) const {
+		return Point(x - ot.x, y - ot.y);
 	}
 
-	pt operator -(const pt& p) const {
-		return pt(x - p.x, y - p.y);
+	Point operator *(ptype k) const {
+		return Point(x * k, y * k);
 	}
 
-	void operator -=(const pt& p){
-		x -= p.x;
-		y -= p.y;
+	void operator +=(const Point& ot) {
+		x += ot.x;
+		y += ot.y;
 	}
 
-	pt operator *(long double k) const {
-		return pt(x * k, y * k);
+	void operator -=(const Point& ot) {
+		x -= ot.x;
+		y -= ot.y;
 	}
 
-	void operator *=(long double k){
+	void operator *=(ptype k) {
 		x *= k;
 		y *= k;
 	}
 
-	long double len(){
-		return sqrtl(x * x + y * y);
+#ifndef INT_GEOM
+	Point operator /(ptype k) const {
+		return Point(x / k, y / k);
 	}
 
-	void norm(long double k = 1){
-		long double d = len();
-		x = x * k / d;
-		y = y * k / d;
+	void operator /=(ptype k) {
+		x /= k;
+		y /= k;
+	}
+#endif	
+
+	ptype operator %(const Point& ot) const {
+		return x * ot.x + y * ot.y;
 	}
 
-	inline bool operator ==(const pt& p) const {
-		return eq(x, p.x) && eq(y, p.y);
+	ptype operator *(const Point& ot) const {
+		return x * ot.y - y * ot.x;
 	}
 
-	inline bool operator !=(const pt& p) const {
-		return !eq(x, p.x) || !eq(y, p.y);
+	ptype getSqrDist() const {
+		return x * x + y * y;
 	}
 
-	void in(){
+	ptype getSqrDist(const Point& ot) const {
+		return (ot - *this) % (ot - *this);
+	}
+
+	ld getDist() const {
+		return sqrt(getSqrDist());
+	}
+
+	ld getDist(const Point& pt) const {
+		return sqrt(getSqrDist(pt));
+	}
+
+	void rot90() {
+		swap(x, y);
+		x = -x;
+	}
+
+#ifndef INT_GEOM
+	void rot(ld angle) {
+		ptype nx = x * cos(angle) + y * sin(angle);
+		ptype ny = x * sin(angle) - y * cos(angle);
+		x = nx, y = ny;
+	}
+
+	void inverse(ptype radius = 1) {
+		ptype dist2 = getSqrDist();
+		x = x * radius * radius / dist2;
+		y = y * radius * radius / dist2;
+	}
+
+	Point getInversed(ptype radius = 1) const {
+		ptype dist2 = getSqrDist();
+		return Point(x * radius * radius / dist2, y * radius * radius / dist2);
+	}
+#endif
+
+	bool operator <(const Point& ot) const {
+		int sx = sign(x - ot.x);
+		int sy = sign(y - ot.y);
+		if (sx) {
+			return sx == -1;
+		} else {
+			return sy == -1;
+		}
+	}
+
+	void scan() {
 		cin >> x >> y;
 	}
+// private:
+	ptype x, y;
 };
 
-long double vec(const pt& p, const pt& q){
-	return p.x * q.y - p.y * q.x;
+istream& operator >>(istream& in, Point& pt) {
+	ptype x, y;
+	in >> x >> y;
+	pt = Point(x, y);
+	return in;
 }
 
-long double scal(const pt& p, const pt& q){
-	return p.x * q.x + p.y * q.y;
+ostream& operator <<(ostream& out, const Point& pt) {
+	out << "(" << pt.getX() << ", " << pt.getY() << ")";
+	return out;
 }
 
-long double S(const pt& p, const pt& q, const pt& r){
-	return fabsl(vec(q - p, r - p)) / 2;
-}
-
-struct line{
-	pt p;	// point of a line
-	pt n;	// normal vector
-
-	line(){}
-	line(const pt& p, const pt& q):p(p){
-		// if (p == q)
-		// 	cerr << p.x << " " << p.y << "\n" << q.x << " " << q.y << "\n";
-		assert(p != q);
-		n = q - p;
-		swap(n.x, n.y);
-		n.y *= -1;
-	}
-	line(const line& l){
-		p = l.p;
-		n = l.n;
+class Line {
+public:
+	Line() {}
+	Line(const Point& fst, const Point& snd) {
+		p = fst;
+		n = snd - fst;
+		n.rot90();
 	}
 
-	inline bool parallel(const line& l) const {
-		return eq(vec(n, l.n), 0);
+	bool intersects(const Line& ot) const {
+		return !ptype_zero(n * ot.n);
 	}
 
-	pt intersect(const line& l) const {
-		pt v = n;
-		v.rot(PI / 2);
-		if (parallel(l)){
-			// cerr << "Intersection of two parallel lines\n";
-			assert(false);
-			return p;
-		} else {
-			return p + v * (scal(l.p - p, l.n) / scal(v, l.n));
+	bool contains(const Point& pt) const {
+		return ptype_zero((pt - p) % n);
+	}
+
+	bool is_parallel(const Line& ot) const {
+		return ptype_zero(n * ot.n);
+	}
+
+	ptype apply(const Point& pt) const {
+		return (pt - p) % n;
+	}
+
+#ifndef INT_GEOM
+	Point intersect(const Line& ot) const {
+		if (!intersects(ot)) {
+			return Point();
 		}
+		ptype c1 = p % n, c2 = ot.p % ot.n;
+		return (n * (c1 * ot.n.getSqrDist() - c2 * (n % ot.n)) +
+			   ot.n * (c2 * n.getSqrDist() - c1 * (n % ot.n))) /
+			   (n.getSqrDist() * ot.n.getSqrDist() - (n % ot.n) * (n % ot.n));
 	}
-
-	pt proj(const pt& r) const {
-		return r + n * (scal(p - r, n) / scal(n, n));
-	}
+#endif
+// private:
+	Point p, n;
 };
 
-struct segment{
-	pt p, q;
-
-	segment(){}
-	segment(const pt& p, const pt& q):p(p),q(q){}
-	segment(const segment& l){
-		p = l.p;
-		q = l.q;
+class Segment {
+public:
+	Segment() {}
+	Segment(const Point& _p, const Point& _q): p(_p), q(_q) {
+		l = Line(_p, _q);
 	}
 
-	inline bool has(const pt& r) const {
-		return eq(vec(r - p, q - p)) && scal(r - p, r - q) <= eps;
-	}
-
-	bool parallel(const segment& s){
-		return line(p, q).parallel(line(s.p, s.q));
-	}
-
-	bool intersect(const segment& s, pt& res) const {
-		line l1(p, q);
-		line l2(s.p, s.q);
-		if (l1.parallel(l2)){
-			if (s.has(p) || s.has(q) || has(s.p) || has(s.q))
-				return true;
-			else
-				return false;
-		}
-		pt p = l1.intersect(l2);
-		if (has(p) && s.has(p)){
-			res = p;
-			return true;
-		} else {
+	bool intersectsInside(const Segment& ot) const {
+		if (ptype_zero(l.n * ot.l.n)) {
 			return false;
 		}
+
+		return (sign(l.apply(ot.p)) * sign(l.apply(ot.q)) == -1) &&
+			   (sign(ot.l.apply(p)) * sign(ot.l.apply(q)) == -1);
 	}
 
-	bool intersect(const vector<segment>& a) const {
-		pt res;
-		for (const segment& x : a){
-			if (intersect(x, res) && ((x.p != p || x.q != q) && (x.p != q || x.q != p))){
+#ifndef INT_GEOM
+	Point intersectInside(const Segment& ot) const {
+		if (!intersectsInside(ot)) {
+			return Point();
+		} else {
+			return l.intersect(ot.l);
+		}
+	}
+#endif
+
+	bool contains(const Point& pt) const {
+		return (sign((pt - p) % (pt - q)) == -1) && ptype_zero((pt - p) * (pt - q));
+	}
+// private:
+	Point p, q;
+	Line l;
+};
+
+class Polygon {
+public:
+	Polygon() {}
+	Polygon(const vector<Point>& _pts): pts(_pts) {}
+
+	ptype getDoubleSquare() const {
+		ptype result = 0;
+		int n = pts.size();
+		for (int i = 1; i < n - 1; ++i) {
+			result += (pts[i] - pts[0]) * (pts[i + 1] - pts[0]);
+		}
+		return abs(result);
+	}
+
+	virtual bool contains(const Point& pt) const {
+		int n = pts.size();
+		for (int i = 0; i < n; ++i) {
+			int j = i + 1;
+			if (j == n) {
+				j = 0;
+			}
+			if (Segment(pts[i], pts[j]).contains(pt)) {
 				return true;
 			}
 		}
-		return false;
-	}
 
-	bool occur(const vector<segment>& a) const {
-		for (const segment& x : a){
-			if ((x.p == p && x.q == q) || (x.p == q && x.q == p))
-				return true;
+		Point v(rand(), rand());
+		ptype maxx = 0, maxy = 0;
+		for (const Point& p : pts) {
+			maxx = max(maxx, abs(p.x - pt.x));
+			maxy = max(maxy, abs(p.y - pt.y));
 		}
-		return false;
-	}
-
-	bool on_the_border(const vector<segment>& a) const {
-		for (const segment& x : a){
-			if (x.has(p) && x.has(q))
-				return true;
+		while (ptype_zero(v.x) || ptype_zero(v.y)) {
+			v = Point(rand(), rand());
 		}
-		return false;
-	}
+		ptype k = min(maxx / abs(v.x), maxy / abs(v.y)) + 1;
+		v *= k;
+		Segment ray(pt, pt + v);
+		bool result = false;
+		for (int i = 0; i < n; ++i) {
+			int j = i + 1;
+			if (j == n) {
+				j = 0;
+			}
+			if (ray.intersectsInside(Segment(pts[i], pts[j]))) {
+				result ^= 1;
+			}
+		}
 
-	inline long double len() const {
-		return (q - p).len();
+		return result;
 	}
-
-	pt proj(const pt& r) const {
-		return line(p, q).proj(r);
-	}
-
-	void make_interval(){
-		long double d = len();
-		pt v = q - p;
-		v.norm(d - 2 * eps);
-		q = p + v;
-		v = p - q;
-		v.norm(d - 4 * eps);
-		p = q + v;
-	}
+// private:
+	vector<Point> pts;
 };
 
-bool inside(const vector<segment>& poly, const pt& p){
-	for (const auto& x : poly)
-		if (x.has(p))
+/***************************************
+	Convex polygon should have its
+	vertices in the CCW order.
+	Moreover, the 0th vertex should
+	be the lowest among the left ones.
+
+	However, it may be not necessary
+***************************************/
+class ConvexPolygon : public Polygon {
+public:
+	ConvexPolygon(const vector<Point>& _pts): pts(_pts) {}
+
+	bool contains(const Point& pt) const {
+		int n = pts.size();
+		int l = 1, r = n - 1;
+		while (r > l + 1) {
+			int mid = (l + r) / 2;
+			int sgn = sign((pt - pts[0]) * (pts[mid] - pts[0]));
+			if (sgn == 0) {
+				return Segment(pts[0], pts[mid]).contains(pt);
+			} else if (sgn == 1) {
+				r = mid;
+			} else {
+				l = mid;
+			}
+		}
+
+		Segment side(pts[l], pts[r]);
+		if (Segment(pts[0], pts[l]).contains(pt) || Segment(pts[0], pts[r]).contains(pt)) {
 			return true;
-	int res = 0;
-	line l(p, pt(p.x + 1, p.y + 0.36345144353635));
-	for (const segment& s : poly){
-		line l1(s.p, s.q);
-		if (l.parallel(l1))
-			continue;
-		pt q = l.intersect(l1);
-		if (q.x < p.x)	// assume that p != q
-			continue;
-		if (q == s.q)
-			continue;
-		if (s.has(q))
-			res ^= 1;
+		}
+		return !side.intersectsInside(Segment(pts[0], pt));
 	}
-	return res;
+// private:
+	vector<Point> pts;
+};
+
+ConvexPolygon getConvexHull(vector<Point> pts) {
+	int index = min_element(pts.begin(), pts.end()) - pts.begin();
+	swap(pts[index], pts[0]);
+	Point origin = pts[0];
+	sort(pts.begin() + 1, pts.end(), [&origin](const Point& fi, const Point& se) {
+		int sgn = sign((fi - origin) * (se - origin));
+		if (sgn) {
+			return sgn == 1;
+		} else {
+			return (fi - origin).getSqrDist() < (se - origin).getSqrDist();
+		}
+	});
+
+	vector<Point> result = {pts[0]};
+	for (int i = 1; i < (int)pts.size(); ++i) {
+		while (result.size() > 1 && sign((result.back() - result[result.size() - 2]) * (pts[i] - result.back())) != 1) {
+			result.pop_back();
+		}
+		result.push_back(pts[i]);
+	}
+	return ConvexPolygon(result);
 }

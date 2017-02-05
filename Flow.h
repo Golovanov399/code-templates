@@ -55,7 +55,7 @@ struct Network{
 		while (true){
 			for (int i = 0; i < n; i++)
 				ptr[i] = 0;
-			int flow = push(0, INT_MAX / 10);
+			int flow = push(s, INT_MAX / 10);
 			if (flow == 0)
 				break;
 			res += flow;
